@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="slides-format" content="viewport">
+    <title>Campus Buddy — Technology &amp; Security</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bg: #080c14;
+            --color-bg-deep: #04060d;
+            --color-surface: #0f1829;
+            --color-text: #e2e8f4;
+            --color-text-secondary: #94a8c8;
+            --color-text-muted: #5a7090;
+            --color-accent-1: #38bdf8;
+            --color-accent-2: #818cf8;
+            --color-accent-3: #34d399;
+            --color-glass-bg: rgba(255,255,255,0.05);
+            --color-glass-border: rgba(255,255,255,0.08);
+            --color-vignette: rgba(0,0,0,0.5);
+            --font-display: "Instrument Serif", serif;
+            --font-body: "Inter", sans-serif;
+        }
+    </style>
+    <style>
+        :root { --color-bg: #080c14; --color-text: #e2e8f4; --glow-color-rgb: 56,189,248; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { background: var(--color-bg); margin: 0; }
+        body { font-family: "Inter", sans-serif; color: var(--color-text); overflow: hidden; height: 100vh; width: 100vw; }
+        .deck { width: 100vw; height: 100vh; position: relative; }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--color-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: scale(0.95); transition: opacity 0.7s ease, transform 0.7s ease; pointer-events: none; overflow: hidden; }
+        .slide.active { opacity: 1; transform: scale(1); pointer-events: all; }
+        .slide > .content { position: relative; z-index: 2; width: 100%; max-width: 1100px; padding: clamp(1.2rem, 3vw, 3rem); }
+        .nav-controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; z-index: 100; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 7px 18px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.08); }
+        .nav-btn { width: 34px; height: 34px; border: none; background: rgba(255,255,255,0.06); color: #38bdf8; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+        .nav-btn:hover { background: rgba(56,189,248,0.15); }
+        .slide-dots { display: flex; gap: 5px; flex-wrap: wrap; max-width: 220px; justify-content: center; }
+        .slide-dots .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.12); cursor: pointer; transition: background 0.3s, transform 0.3s; flex-shrink: 0; }
+        .slide-dots .dot.active { background: #38bdf8; transform: scale(1.35); }
+        .slide-counter { font-size: 0.72rem; color: #5a7090; min-width: 40px; text-align: center; }
+        .reveal { opacity: 0; transform: translateY(18px); }
+        @keyframes glow-pulse { 0%, 100% { text-shadow: 0 0 20px rgba(56,189,248,0.5); } 50% { text-shadow: 0 0 35px rgba(56,189,248,0.85); } }
+        .glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
+        @keyframes float-slow { 0% { transform: translate(0,0) scale(1); } 25% { transform: translate(60px,-50px) scale(1.12); } 50% { transform: translate(-40px,40px) scale(0.9); } 75% { transform: translate(50px,20px) scale(1.08); } 100% { transform: translate(0,0) scale(1); } }
+        @keyframes float-drift { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(-50px,-60px) scale(1.15); } 66% { transform: translate(40px,30px) scale(0.88); } 100% { transform: translate(0,0) scale(1); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+        .gradient-mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); animation: float-slow 12s ease-in-out infinite; }
+        .blob:nth-child(2) { animation: float-drift 16s ease-in-out infinite; }
+        .blob:nth-child(3) { animation: float-slow 20s ease-in-out infinite reverse; }
+        .slide::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 256px; opacity: 0.03; mix-blend-mode: overlay; }
+        .slide::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%); }
+        .bar-track { height: 5px; background: rgba(255,255,255,0.08); border-radius: 99px; margin-top: 7px; }
+        .bar-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+        /* SWOT grid */
+        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
+        .swot-cell { padding: 12px 14px; border-radius: 10px; }
+        .swot-cell ul { list-style: none; padding: 0; margin: 0; font-size: 0.72rem; line-height: 1.7; }
+        .swot-cell ul li::before { content: "· "; opacity: 0.5; }
+        /* STRIDE */
+        .stride-row { display: grid; grid-template-columns: 80px 1fr 1fr; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .stride-row:last-child { border-bottom: none; }
+        /* OWASP table */
+        .owasp-table { width: 100%; border-collapse: collapse; font-size: 0.73rem; }
+        .owasp-table th { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #5a7090; padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; }
+        .owasp-table td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #94a8c8; vertical-align: top; }
+        .owasp-table tr:hover td { background: rgba(255,255,255,0.02); }
+        /* Roadmap */
+        .roadmap-row { display: grid; grid-template-columns: 110px 1fr; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: start; }
+        .roadmap-row:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+<div class="mouse-spotlight" style="position:fixed;inset:0;z-index:99;pointer-events:none;"></div>
+<div class="deck">
+
+<!-- ═══════════════════════════════════════════
+     TECH SLIDES 1–8 (original)
+═══════════════════════════════════════════ -->
+
+<!-- SLIDE 1: TITLE — TECH -->
+<div class="slide active" data-slide="1">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:500px;height:500px;top:-120px;right:-80px;background:#38bdf8;opacity:0.12;"></div>
+        <div class="blob" style="width:350px;height:350px;bottom:-80px;left:-60px;background:#818cf8;opacity:0.10;"></div>
+        <div class="blob" style="width:220px;height:220px;top:45%;left:10%;background:#34d399;opacity:0.08;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content" style="text-align:center;">
+        <div style="font-size:86px;margin-bottom:14px;animation:float 3s ease-in-out infinite;">🛠️</div>
+        <div class="reveal" style="font-size:0.72rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:#5a7090;margin-bottom:10px;">Slide 14</div>
+        <h1 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(2.2rem,5vw,4rem);font-weight:400;line-height:1.1;background:linear-gradient(135deg,#38bdf8,#818cf8,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;">Technology Stack &amp;<br>System Architecture</h1>
+        <p class="reveal" style="font-size:clamp(0.8rem,1.3vw,1rem);color:#5a7090;letter-spacing:0.3em;text-transform:uppercase;font-weight:300;">Campus Buddy · Full-Stack Deep Dive</p>
+    </div>
+</div>
+
+<!-- SLIDE 2: ARCHITECTURE OVERVIEW -->
+<div class="slide" data-slide="2">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:400px;height:400px;top:-100px;right:-80px;background:#38bdf8;opacity:0.07;"></div>
+        <div class="blob" style="width:300px;height:300px;bottom:-70px;left:-50px;background:#818cf8;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:5px;">Architecture</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.2vw,2.5rem);font-weight:400;margin-bottom:18px;line-height:1.2;">Modern Mobile-First <span style="color:#38bdf8;">3-Layer System</span></h2>
+        <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+            <div style="padding:13px 15px;border-radius:12px;border:1px solid rgba(56,189,248,0.25);background:rgba(56,189,248,0.06);">
+                <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#38bdf8;margin-bottom:5px;">Client Layer</div>
+                <div style="font-size:0.8rem;color:#94a8c8;line-height:1.5;">React + Vite · Tailwind CSS · React Router · Context API</div>
+            </div>
+            <div style="padding:13px 15px;border-radius:12px;border:1px solid rgba(129,140,248,0.25);background:rgba(129,140,248,0.06);">
+                <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#818cf8;margin-bottom:5px;">Server Layer</div>
+                <div style="font-size:0.8rem;color:#94a8c8;line-height:1.5;">Node.js + Express · Socket.io · JWT Auth · REST API</div>
+            </div>
+            <div style="padding:13px 15px;border-radius:12px;border:1px solid rgba(52,211,153,0.25);background:rgba(52,211,153,0.06);">
+                <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#34d399;margin-bottom:5px;">Data Layer</div>
+                <div style="font-size:0.8rem;color:#94a8c8;line-height:1.5;">PostgreSQL · Redis Cache · S3 Media · RDS Managed</div>
+            </div>
+        </div>
+        <div class="reveal" style="padding:11px 16px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:14px;">
+            <span style="font-size:1.3rem;">📱</span>
+            <p style="font-size:0.8rem;color:#94a8c8;margin:0;line-height:1.6;">MVP runs in a browser-based phone simulator · Production targets <strong style="color:#e2e8f4;">PWA + cross-platform native-feel app</strong> from day one. Each layer scales independently.</p>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 3: FRONTEND + BACKEND -->
+<div class="slide" data-slide="3">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-90px;right:-60px;background:#38bdf8;opacity:0.08;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#818cf8;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:5px;">Core Technologies · 1 of 3</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:400;margin-bottom:16px;">Frontend, Routing &amp; Backend</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="reveal" style="padding:16px;border-radius:12px;border:1px solid rgba(56,189,248,0.2);background:rgba(56,189,248,0.05);">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;"><span style="font-size:1.3rem;">⚛️</span><span style="font-weight:700;color:#38bdf8;font-size:0.9rem;">React + Vite</span></div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.77rem;color:#94a8c8;line-height:1.85;">
+                    <li>→ Components: Feed, Finder, Messages, Profile</li>
+                    <li>→ Vite: near-instant HMR + optimized bundles</li>
+                    <li>→ Tailwind CSS: utility-first, consistent design</li>
+                    <li>→ React Router: client-side nav, zero full reloads</li>
+                </ul>
+            </div>
+            <div class="reveal" style="padding:16px;border-radius:12px;border:1px solid rgba(129,140,248,0.2);background:rgba(129,140,248,0.05);">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;"><span style="font-size:1.3rem;">🔄</span><span style="font-weight:700;color:#818cf8;font-size:0.9rem;">React Router + Context API</span></div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.77rem;color:#94a8c8;line-height:1.85;">
+                    <li>→ React Router manages all navigation state</li>
+                    <li>→ Context holds: user, posts, connections, messages</li>
+                    <li>→ MVP: in-memory state for instant feedback</li>
+                    <li>→ Production: syncs via API + client-side cache</li>
+                </ul>
+            </div>
+            <div class="reveal" style="padding:16px;border-radius:12px;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.05);">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;"><span style="font-size:1.3rem;">🖥️</span><span style="font-weight:700;color:#34d399;font-size:0.9rem;">Node.js + Express (REST API)</span></div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.77rem;color:#94a8c8;line-height:1.85;">
+                    <li>→ Auth, feed ranking, match scoring logic</li>
+                    <li>→ Non-blocking I/O for 1000s concurrent users</li>
+                    <li>→ RESTful: /users /posts /connections /convos</li>
+                    <li>→ Stateless design → horizontal scaling</li>
+                </ul>
+            </div>
+            <div class="reveal" style="padding:16px;border-radius:12px;border:1px solid rgba(251,191,36,0.2);background:rgba(251,191,36,0.05);">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;"><span style="font-size:1.3rem;">⚡</span><span style="font-weight:700;color:#fbbf24;font-size:0.9rem;">WebSockets (Socket.io)</span></div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.77rem;color:#94a8c8;line-height:1.85;">
+                    <li>→ Persistent bidirectional client↔server link</li>
+                    <li>→ Instant message push — zero polling</li>
+                    <li>→ Live notifications: "joined your activity"</li>
+                    <li>→ Presence: online / typing status</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 4: DATABASE + AUTH -->
+<div class="slide" data-slide="4">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:360px;height:360px;top:-80px;right:-60px;background:#34d399;opacity:0.07;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#38bdf8;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#34d399;margin-bottom:5px;">Core Technologies · 2 of 3</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:400;margin-bottom:16px;">Database &amp; Authentication</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div class="reveal" style="grid-column:span 2;padding:16px;border-radius:12px;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.04);">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;"><span style="font-size:1.4rem;">🗄️</span><span style="font-weight:700;color:#34d399;font-size:0.9rem;">PostgreSQL + Redis — Two-Layer Strategy</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#34d399;margin-bottom:5px;">PostgreSQL (Primary)</div>
+                        <ul style="list-style:none;padding:0;margin:0;font-size:0.76rem;color:#94a8c8;line-height:1.8;">
+                            <li>· Users, posts, connections schema</li>
+                            <li>· Message history with integrity</li>
+                            <li>· Read replicas for feed queries</li>
+                            <li>· AWS RDS managed + auto-backup</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#fbbf24;margin-bottom:5px;">Redis (Cache Layer)</div>
+                        <ul style="list-style:none;padding:0;margin:0;font-size:0.76rem;color:#94a8c8;line-height:1.8;">
+                            <li>· Active user session store</li>
+                            <li>· Activity feed cache (recent posts)</li>
+                            <li>· Real-time presence tracking</li>
+                            <li>· Socket.io Pub/Sub multi-node bridge</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal" style="padding:16px;border-radius:12px;border:1px solid rgba(129,140,248,0.2);background:rgba(129,140,248,0.05);">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;"><span style="font-size:1.4rem;">🔐</span><span style="font-weight:700;color:#818cf8;font-size:0.88rem;">Univ. Email SSO + JWT</span></div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.76rem;color:#94a8c8;line-height:1.85;">
+                    <li>→ .edu email: magic link or</li>
+                    <li>&nbsp;&nbsp;Google Workspace OAuth</li>
+                    <li>→ JWT issued on auth success</li>
+                    <li>→ Token in every API header</li>
+                    <li>→ Stateless — no DB hit per call</li>
+                </ul>
+            </div>
+        </div>
+        <div class="reveal" style="margin-top:10px;padding:9px 14px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:0.76rem;color:#5a7090;">
+            💡 PostgreSQL for durability + Redis for speed → low read latency under heavy load
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 5: AWS -->
+<div class="slide" data-slide="5">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:400px;height:400px;top:-100px;right:-60px;background:#fbbf24;opacity:0.07;"></div>
+        <div class="blob" style="width:300px;height:300px;bottom:-60px;left:-40px;background:#38bdf8;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#fbbf24;margin-bottom:5px;">Core Technologies · 3 of 3</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:400;margin-bottom:16px;">☁️ AWS Cloud Infrastructure</h2>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;">
+            <div class="reveal" style="padding:13px 15px;border-radius:10px;border:1px solid rgba(251,191,36,0.2);background:rgba(251,191,36,0.05);">
+                <div style="font-size:0.7rem;font-weight:700;color:#fbbf24;margin-bottom:5px;">EC2 / ECS</div>
+                <div style="font-size:0.74rem;color:#94a8c8;line-height:1.6;">Docker containers: Node.js API + Socket.io · Consistent deploys · Auto-scale on load</div>
+            </div>
+            <div class="reveal" style="padding:13px 15px;border-radius:10px;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.05);">
+                <div style="font-size:0.7rem;font-weight:700;color:#34d399;margin-bottom:5px;">RDS + ElastiCache</div>
+                <div style="font-size:0.74rem;color:#94a8c8;line-height:1.6;">Managed PostgreSQL — auto-backup + failover · Managed Redis cluster</div>
+            </div>
+            <div class="reveal" style="padding:13px 15px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);background:rgba(56,189,248,0.05);">
+                <div style="font-size:0.7rem;font-weight:700;color:#38bdf8;margin-bottom:5px;">S3 + CloudFront CDN</div>
+                <div style="font-size:0.74rem;color:#94a8c8;line-height:1.6;">React bundle at global edge nodes · Fast load anywhere · Profile photos off app server</div>
+            </div>
+            <div class="reveal" style="padding:13px 15px;border-radius:10px;border:1px solid rgba(129,140,248,0.2);background:rgba(129,140,248,0.05);">
+                <div style="font-size:0.7rem;font-weight:700;color:#818cf8;margin-bottom:5px;">SES (Email)</div>
+                <div style="font-size:0.74rem;color:#94a8c8;line-height:1.6;">Verification + notification emails via AWS Simple Email Service</div>
+            </div>
+            <div class="reveal" style="padding:13px 15px;border-radius:10px;border:1px solid rgba(251,113,133,0.2);background:rgba(251,113,133,0.05);grid-column:span 2;">
+                <div style="font-size:0.7rem;font-weight:700;color:#fb7185;margin-bottom:5px;">SNS + Firebase Cloud Messaging</div>
+                <div style="font-size:0.74rem;color:#94a8c8;line-height:1.6;">Push notifications to iOS + Android for activity alerts and direct messages</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 6: SYSTEM FLOW -->
+<div class="slide" data-slide="6">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-90px;right:-60px;background:#818cf8;opacity:0.08;"></div>
+        <div class="blob" style="width:260px;height:260px;bottom:-60px;left:-40px;background:#34d399;opacity:0.06;"></div>
+    </div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#818cf8;margin-bottom:5px;">System Flow</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:400;margin-bottom:18px;">How the System Works — Request Lifecycle</h2>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="reveal" style="display:flex;align-items:center;gap:13px;padding:10px 15px;border-radius:10px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);">
+                <span style="width:25px;height:25px;border-radius:50%;background:rgba(56,189,248,0.2);color:#38bdf8;font-weight:800;font-size:0.76rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</span>
+                <div><span style="font-weight:600;font-size:0.83rem;color:#38bdf8;">CDN Edge Delivery</span><span style="font-size:0.78rem;color:#94a8c8;margin-left:8px;">→ React bundle served instantly from nearest CloudFront edge node</span></div>
+            </div>
+            <div class="reveal" style="display:flex;align-items:center;gap:13px;padding:10px 15px;border-radius:10px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);">
+                <span style="width:25px;height:25px;border-radius:50%;background:rgba(129,140,248,0.2);color:#818cf8;font-weight:800;font-size:0.76rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</span>
+                <div><span style="font-weight:600;font-size:0.83rem;color:#818cf8;">JWT Authentication</span><span style="font-size:0.78rem;color:#94a8c8;margin-left:8px;">→ Validates JWT token header · No DB hit · Stateless &amp; fast</span></div>
+            </div>
+            <div class="reveal" style="display:flex;align-items:center;gap:13px;padding:10px 15px;border-radius:10px;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.15);">
+                <span style="width:25px;height:25px;border-radius:50%;background:rgba(52,211,153,0.2);color:#34d399;font-weight:800;font-size:0.76rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</span>
+                <div><span style="font-weight:600;font-size:0.83rem;color:#34d399;">Single API Hydration</span><span style="font-size:0.78rem;color:#94a8c8;margin-left:8px;">→ 1 API call · Returns feed + friend suggestions + conversations together</span></div>
+            </div>
+            <div class="reveal" style="display:flex;align-items:center;gap:13px;padding:10px 15px;border-radius:10px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);">
+                <span style="width:25px;height:25px;border-radius:50%;background:rgba(251,191,36,0.2);color:#fbbf24;font-weight:800;font-size:0.76rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</span>
+                <div><span style="font-weight:600;font-size:0.83rem;color:#fbbf24;">Dual DB Query</span><span style="font-size:0.78rem;color:#94a8c8;margin-left:8px;">→ PostgreSQL for structured data · Redis for cached feed + real-time presence</span></div>
+            </div>
+            <div class="reveal" style="display:flex;align-items:center;gap:13px;padding:10px 15px;border-radius:10px;background:rgba(251,113,133,0.06);border:1px solid rgba(251,113,133,0.15);">
+                <span style="width:25px;height:25px;border-radius:50%;background:rgba(251,113,133,0.2);color:#fb7185;font-weight:800;font-size:0.76rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">5</span>
+                <div><span style="font-weight:600;font-size:0.83rem;color:#fb7185;">WebSocket Live Channel</span><span style="font-size:0.78rem;color:#94a8c8;margin-left:8px;">→ Socket.io connection · Messages &amp; activity updates pushed instantly, no polling</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 7: SCALABILITY -->
+<div class="slide" data-slide="7">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:400px;height:400px;top:-100px;right:-70px;background:#38bdf8;opacity:0.08;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#34d399;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#34d399;margin-bottom:5px;">Scalability</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:400;margin-bottom:14px;">Scales Horizontally at Every Layer</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="reveal" style="padding:11px 15px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+                <div style="font-size:0.66rem;font-weight:700;color:#38bdf8;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:3px;">Frontend</div>
+                <div style="font-size:0.78rem;color:#94a8c8;">CDN static files — <strong style="color:#e2e8f4;">infinitely scalable</strong> at near-zero marginal cost</div>
+                <div class="bar-track"><div class="bar-fill" data-width="98" style="background:linear-gradient(90deg,#38bdf8,#818cf8);"></div></div>
+            </div>
+            <div class="reveal" style="padding:11px 15px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+                <div style="font-size:0.66rem;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:3px;">API Servers</div>
+                <div style="font-size:0.78rem;color:#94a8c8;">Stateless containers · <strong style="color:#e2e8f4;">AWS Auto Scaling</strong> adds instances automatically</div>
+                <div class="bar-track"><div class="bar-fill" data-width="88" style="background:linear-gradient(90deg,#818cf8,#a78bfa);"></div></div>
+            </div>
+            <div class="reveal" style="padding:11px 15px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+                <div style="font-size:0.66rem;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:3px;">WebSocket Servers</div>
+                <div style="font-size:0.78rem;color:#94a8c8;">Sticky sessions + <strong style="color:#e2e8f4;">Redis Pub/Sub</strong> — nodes share message state</div>
+                <div class="bar-track"><div class="bar-fill" data-width="80" style="background:linear-gradient(90deg,#fbbf24,#f97316);"></div></div>
+            </div>
+            <div class="reveal" style="padding:11px 15px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+                <div style="font-size:0.66rem;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:3px;">Database</div>
+                <div style="font-size:0.78rem;color:#94a8c8;"><strong style="color:#e2e8f4;">Read replicas</strong> for feed · Redis shards cache · S3 auto-scales</div>
+                <div class="bar-track"><div class="bar-fill" data-width="85" style="background:linear-gradient(90deg,#34d399,#06b6d4);"></div></div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <div class="reveal" style="padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);background:rgba(56,189,248,0.06);text-align:center;">
+                <div style="font-size:1.5rem;font-weight:800;color:#38bdf8;" class="glow-pulse">$200–400</div>
+                <div style="font-size:0.66rem;color:#5a7090;text-transform:uppercase;letter-spacing:0.1em;">/month per campus</div>
+                <div style="font-size:0.72rem;color:#94a8c8;margin-top:3px;">10k+ concurrent users on 2 servers</div>
+            </div>
+            <div class="reveal" style="padding:12px;border-radius:10px;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.06);text-align:center;">
+                <div style="font-size:1.5rem;font-weight:800;color:#34d399;" class="glow-pulse">1</div>
+                <div style="font-size:0.66rem;color:#5a7090;text-transform:uppercase;letter-spacing:0.1em;">DevOps @ 50 universities</div>
+                <div style="font-size:0.72rem;color:#94a8c8;margin-top:3px;">New campus = config change only</div>
+            </div>
+            <div class="reveal" style="padding:12px;border-radius:10px;border:1px solid rgba(129,140,248,0.2);background:rgba(129,140,248,0.06);text-align:center;">
+                <div style="font-size:1.5rem;font-weight:800;color:#818cf8;" class="glow-pulse">3–4</div>
+                <div style="font-size:0.66rem;color:#5a7090;text-transform:uppercase;letter-spacing:0.1em;">SRE team @ 500 universities</div>
+                <div style="font-size:0.72rem;color:#94a8c8;margin-top:3px;">Managed AWS handles the rest</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 8: TECH SNAPSHOT -->
+<div class="slide" data-slide="8">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:500px;height:500px;top:-120px;right:-80px;background:#38bdf8;opacity:0.12;"></div>
+        <div class="blob" style="width:350px;height:350px;bottom:-80px;left:-60px;background:#818cf8;opacity:0.10;"></div>
+        <div class="blob" style="width:240px;height:240px;top:40%;left:8%;background:#34d399;opacity:0.08;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content" style="text-align:center;">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:#5a7090;margin-bottom:12px;">Tech Snapshot</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.5vw,2.8rem);font-weight:400;line-height:1.2;background:linear-gradient(135deg,#38bdf8,#818cf8,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px;">Built to Scale From<br>1 Campus to 500+</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-bottom:20px;">
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);font-size:0.76rem;color:#38bdf8;font-weight:500;">React + Vite</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);font-size:0.76rem;color:#818cf8;font-weight:500;">Node.js + Express</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);font-size:0.76rem;color:#38bdf8;font-weight:500;">Socket.io</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);font-size:0.76rem;color:#34d399;font-weight:500;">PostgreSQL</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);font-size:0.76rem;color:#fbbf24;font-weight:500;">Redis</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(251,113,133,0.1);border:1px solid rgba(251,113,133,0.25);font-size:0.76rem;color:#fb7185;font-weight:500;">JWT + SSO</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);font-size:0.76rem;color:#fbbf24;font-weight:500;">AWS ECS / RDS</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);font-size:0.76rem;color:#38bdf8;font-weight:500;">CloudFront CDN</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);font-size:0.76rem;color:#818cf8;font-weight:500;">Firebase Push</span>
+            <span class="reveal" style="padding:5px 13px;border-radius:99px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);font-size:0.76rem;color:#34d399;font-weight:500;">Docker + Auto Scaling</span>
+        </div>
+        <p class="reveal" style="font-size:0.82rem;color:#5a7090;max-width:580px;margin:0 auto;line-height:1.7;">Frontend · API · Real-time · Database each scale independently.<br>A messaging spike doesn't slow the feed. A signup surge doesn't lag active chats.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SECURITY SLIDES 9–14
+═══════════════════════════════════════════ -->
+
+<!-- SLIDE 9: SECURITY TITLE + SECTION INTRO -->
+<div class="slide" data-slide="9">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:500px;height:500px;top:-120px;right:-80px;background:#ef4444;opacity:0.10;"></div>
+        <div class="blob" style="width:350px;height:350px;bottom:-80px;left:-60px;background:#818cf8;opacity:0.09;"></div>
+        <div class="blob" style="width:220px;height:220px;top:40%;left:8%;background:#f97316;opacity:0.07;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content" style="text-align:center;">
+        <div style="font-size:80px;margin-bottom:14px;animation:float 3s ease-in-out infinite;">🔒</div>
+        <div class="reveal" style="font-size:0.72rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:#5a7090;margin-bottom:10px;">Slide 15</div>
+        <h1 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(2rem,4.5vw,3.6rem);font-weight:400;line-height:1.1;background:linear-gradient(135deg,#ef4444,#f97316,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;">Cybersecurity</h1>
+        <p class="reveal" style="font-size:clamp(0.8rem,1.3vw,1rem);color:#5a7090;letter-spacing:0.3em;text-transform:uppercase;font-weight:300;">SWOT · STRIDE · OWASP · Compliance · Roadmap</p>
+        <div class="reveal" style="margin-top:20px;padding:12px 20px;border-radius:12px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);display:inline-block;max-width:600px;">
+            <p style="font-size:0.82rem;color:#94a8c8;margin:0;line-height:1.7;">Campus Buddy's core attack surface: <strong style="color:#e2e8f4;">identity trust</strong> (who is really a student?) and <strong style="color:#e2e8f4;">data sensitivity</strong> (location + social graph of young adults). Security is a prerequisite for university procurement approval.</p>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 10: SECURITY SWOT -->
+<div class="slide" data-slide="10">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-90px;right:-60px;background:#ef4444;opacity:0.07;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#818cf8;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#ef4444;margin-bottom:5px;">Cybersecurity · 1 of 5</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.4rem,2.6vw,2rem);font-weight:400;margin-bottom:3px;">Security SWOT Analysis</h2>
+        <!-- Column headers -->
+        <div class="reveal" style="display:grid;grid-template-columns:80px 1fr 1fr;gap:10px;margin-bottom:6px;">
+            <div></div>
+            <div style="text-align:center;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#34d399;">✚ Helpful</div>
+            <div style="text-align:center;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#ef4444;">✖ Harmful</div>
+        </div>
+        <div class="reveal" style="display:grid;grid-template-columns:80px 1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;">
+            <!-- Row labels -->
+            <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-size:0.62rem;font-weight:700;color:#5a7090;text-transform:uppercase;letter-spacing:0.1em;text-align:right;line-height:1.4;">Internal</div>
+            <div style="padding:11px 13px;border-radius:10px;border:1px solid rgba(52,211,153,0.25);background:rgba(52,211,153,0.05);">
+                <div style="font-size:0.66rem;font-weight:700;color:#34d399;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.1em;">Strengths</div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.72rem;color:#94a8c8;line-height:1.75;">
+                    <li>· Stateless JWT — reduced session attack surface</li>
+                    <li>· React frontend: no direct DB access from client</li>
+                    <li>· REST API cleanly separates frontend from data</li>
+                    <li>· AWS Shield Standard: built-in DDoS protection</li>
+                    <li>· CDN-served frontend: zero server-side exec risk</li>
+                </ul>
+            </div>
+            <div style="padding:11px 13px;border-radius:10px;border:1px solid rgba(239,68,68,0.25);background:rgba(239,68,68,0.05);">
+                <div style="font-size:0.66rem;font-weight:700;color:#ef4444;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.1em;">Weaknesses</div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.72rem;color:#94a8c8;line-height:1.75;">
+                    <li>· Student PII (names, majors, location) is high-value</li>
+                    <li>· WebSocket layer harder to secure than HTTP</li>
+                    <li>· MVP: no rate limiting or input sanitization yet</li>
+                    <li>· University SSO — auth failures outside our control</li>
+                    <li>· Small team = limited dedicated security capacity</li>
+                </ul>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-size:0.62rem;font-weight:700;color:#5a7090;text-transform:uppercase;letter-spacing:0.1em;text-align:right;line-height:1.4;">External</div>
+            <div style="padding:11px 13px;border-radius:10px;border:1px solid rgba(56,189,248,0.25);background:rgba(56,189,248,0.05);">
+                <div style="font-size:0.66rem;font-weight:700;color:#38bdf8;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.1em;">Opportunities</div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.72rem;color:#94a8c8;line-height:1.75;">
+                    <li>· Univ. IT partnerships: SIEM + compliance guidance</li>
+                    <li>· FERPA/GDPR compliance as sales differentiator</li>
+                    <li>· University SSO removes password management risk</li>
+                    <li>· Bug bounty: crowdsourced testing at low cost</li>
+                    <li>· SOC 2 / ISO 27001 unlocks enterprise contracts</li>
+                </ul>
+            </div>
+            <div style="padding:11px 13px;border-radius:10px;border:1px solid rgba(249,115,22,0.25);background:rgba(249,115,22,0.05);">
+                <div style="font-size:0.66rem;font-weight:700;color:#f97316;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.1em;">Threats</div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.72rem;color:#94a8c8;line-height:1.75;">
+                    <li>· Students: weak passwords, phishing, credential reuse</li>
+                    <li>· Social platforms targeted for stalking + doxxing</li>
+                    <li>· Fake student profiles to harvest data or harass</li>
+                    <li>· Location + messaging = serious physical safety risk</li>
+                    <li>· API scraping could expose entire activity graph</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 11: STRIDE THREAT MODEL -->
+<div class="slide" data-slide="11">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-90px;right:-60px;background:#f97316;opacity:0.07;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#ef4444;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#f97316;margin-bottom:5px;">Cybersecurity · 2 of 5</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.4rem,2.6vw,2rem);font-weight:400;margin-bottom:14px;">STRIDE Threat Model <span style="font-size:0.7em;color:#5a7090;font-family:Inter,sans-serif;font-style:italic;">(Microsoft Framework)</span></h2>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            <div class="reveal" style="display:grid;grid-template-columns:52px 1fr 1fr;gap:10px;padding:9px 12px;border-radius:9px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);align-items:start;">
+                <div style="font-weight:900;font-size:1.1rem;color:#ef4444;">S</div>
+                <div><div style="font-weight:700;font-size:0.78rem;color:#ef4444;margin-bottom:2px;">Spoofing Identity</div><div style="font-size:0.72rem;color:#94a8c8;line-height:1.5;">Fake student accounts impersonating real users · Risk: social engineering + physical harm · <strong style="color:#fca5a5;">Severity: High</strong></div></div>
+                <div style="font-size:0.7rem;color:#5a7090;line-height:1.6;"><span style="color:#34d399;font-weight:600;">→ Mitigations:</span> .edu email verification · University SSO as primary auth · Rate-limit account creation · Profile flagging + fast takedowns</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:52px 1fr 1fr;gap:10px;padding:9px 12px;border-radius:9px;background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.15);align-items:start;">
+                <div style="font-weight:900;font-size:1.1rem;color:#f97316;">T</div>
+                <div><div style="font-weight:700;font-size:0.78rem;color:#f97316;margin-bottom:2px;">Tampering with Data</div><div style="font-size:0.72rem;color:#94a8c8;line-height:1.5;">Forged API requests modify others' posts or messages · <strong style="color:#fdba74;">Severity: Medium</strong></div></div>
+                <div style="font-size:0.7rem;color:#5a7090;line-height:1.6;"><span style="color:#34d399;font-weight:600;">→ Mitigations:</span> JWT userId ownership checks on all writes · DB-level row constraints · Append-only immutable message logs</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:52px 1fr 1fr;gap:10px;padding:9px 12px;border-radius:9px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.13);align-items:start;">
+                <div style="font-weight:900;font-size:1.1rem;color:#fbbf24;">R</div>
+                <div><div style="font-weight:700;font-size:0.78rem;color:#fbbf24;margin-bottom:2px;">Repudiation</div><div style="font-size:0.72rem;color:#94a8c8;line-height:1.5;">User denies sending harassment — no audit trail = no moderation · <strong style="color:#fde68a;">Severity: Medium-High</strong></div></div>
+                <div style="font-size:0.7rem;color:#5a7090;line-height:1.6;"><span style="color:#34d399;font-weight:600;">→ Mitigations:</span> Immutable server-side audit logs · AWS CloudWatch / S3 object lock · Content reporting system with case tracking</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:52px 1fr 1fr;gap:10px;padding:9px 12px;border-radius:9px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);align-items:start;">
+                <div style="font-weight:900;font-size:1.1rem;color:#ef4444;">I</div>
+                <div><div style="font-weight:700;font-size:0.78rem;color:#ef4444;margin-bottom:2px;">Information Disclosure</div><div style="font-size:0.72rem;color:#94a8c8;line-height:1.5;">IDOR exposes PII — FERPA + GDPR violation risk · <strong style="color:#fca5a5;">Severity: High</strong></div></div>
+                <div style="font-size:0.7rem;color:#5a7090;line-height:1.6;"><span style="color:#34d399;font-weight:600;">→ Mitigations:</span> Strict API serialization · IDOR permission checks · AES-256 at rest · TLS 1.3 + HSTS · No message content in app logs</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:52px 1fr 1fr;gap:10px;padding:9px 12px;border-radius:9px;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.15);align-items:start;">
+                <div style="font-weight:900;font-size:1.1rem;color:#818cf8;">D</div>
+                <div><div style="font-weight:700;font-size:0.78rem;color:#818cf8;margin-bottom:2px;">Denial of Service</div><div style="font-size:0.72rem;color:#94a8c8;line-height:1.5;">Bot floods feed API or WebSocket — damages UX + compute cost · <strong style="color:#c4b5fd;">Severity: Medium</strong></div></div>
+                <div style="font-size:0.7rem;color:#5a7090;line-height:1.6;"><span style="color:#34d399;font-weight:600;">→ Mitigations:</span> Rate limiting 60 req/min JWT + IP · AWS WAF + Shield Standard · Max 3 WebSocket sessions/user</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:52px 1fr 1fr;gap:10px;padding:9px 12px;border-radius:9px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);align-items:start;">
+                <div style="font-weight:900;font-size:1.1rem;color:#ef4444;">E</div>
+                <div><div style="font-weight:700;font-size:0.78rem;color:#ef4444;margin-bottom:2px;">Elevation of Privilege</div><div style="font-size:0.72rem;color:#94a8c8;line-height:1.5;">Student forges JWT claims to gain admin access · <strong style="color:#fca5a5;">Severity: Critical</strong></div></div>
+                <div style="font-size:0.7rem;color:#5a7090;line-height:1.6;"><span style="color:#34d399;font-weight:600;">→ Mitigations:</span> RS256 asymmetric JWT signing · Server-side RBAC on every request · Admin API on separate internal network · Principle of least privilege on AWS IAM</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 12: OWASP TOP 10 -->
+<div class="slide" data-slide="12">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-90px;right:-60px;background:#ef4444;opacity:0.08;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#f97316;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#ef4444;margin-bottom:5px;">Cybersecurity · 3 of 5</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.4rem,2.6vw,2rem);font-weight:400;margin-bottom:14px;">OWASP Top 10 — Campus Buddy Relevance</h2>
+        <div class="reveal">
+            <table class="owasp-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>Risk</th>
+                        <th>Campus Buddy Relevance</th>
+                        <th style="width:90px;">Priority</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A01</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Broken Access Control</td><td>IDOR on posts/messages; accessing other users' chats</td><td><span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🔴 Critical</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A02</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Cryptographic Failures</td><td>Unencrypted PII, weak JWT signing, HTTP fallback</td><td><span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🔴 Critical</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A03</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Injection</td><td>SQL injection via search/filter inputs</td><td><span style="background:rgba(239,68,68,0.2);color:#ef4444;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🔴 Critical</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A04</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Insecure Design</td><td>No rate limiting in MVP; no abuse-reporting flow</td><td><span style="background:rgba(249,115,22,0.2);color:#f97316;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🟠 High</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A05</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Security Misconfiguration</td><td>Exposed S3 buckets, verbose error messages</td><td><span style="background:rgba(249,115,22,0.2);color:#f97316;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🟠 High</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A06</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Vulnerable Components</td><td>Outdated npm packages with known CVEs</td><td><span style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🟡 Medium</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A07</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Auth &amp; Session Failures</td><td>JWT not invalidated on logout; no refresh token rotation</td><td><span style="background:rgba(249,115,22,0.2);color:#f97316;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🟠 High</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A08</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Software &amp; Data Integrity</td><td>npm supply chain not verified; CI/CD not hardened</td><td><span style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🟡 Medium</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A09</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">Logging &amp; Monitoring</td><td>No security event alerting in MVP</td><td><span style="background:rgba(249,115,22,0.2);color:#f97316;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🟠 High</span></td></tr>
+                    <tr><td style="color:#5a7090;font-size:0.68rem;">A10</td><td style="color:#e2e8f4;font-weight:600;font-size:0.76rem;">SSRF</td><td>Low risk for MVP; relevant if user URLs are fetched server-side</td><td><span style="background:rgba(52,211,153,0.12);color:#34d399;padding:2px 7px;border-radius:4px;font-size:0.68rem;font-weight:700;">🟢 Low</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 13: COMPLIANCE -->
+<div class="slide" data-slide="13">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-90px;right:-60px;background:#818cf8;opacity:0.08;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#38bdf8;opacity:0.06;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#818cf8;margin-bottom:5px;">Cybersecurity · 4 of 5</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.4rem,2.6vw,2rem);font-weight:400;margin-bottom:16px;">Compliance Requirements</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
+            <div class="reveal" style="padding:18px;border-radius:12px;border:1px solid rgba(56,189,248,0.25);background:rgba(56,189,248,0.05);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <span style="font-size:1.6rem;">🇺🇸</span>
+                    <div>
+                        <div style="font-weight:700;color:#38bdf8;font-size:0.9rem;">FERPA</div>
+                        <div style="font-size:0.68rem;color:#5a7090;">Family Educational Rights &amp; Privacy Act</div>
+                    </div>
+                </div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.76rem;color:#94a8c8;line-height:1.85;">
+                    <li>· Applies to all US university deployments</li>
+                    <li>· Campus Buddy = "school official" under FERPA</li>
+                    <li>· Students must access, correct &amp; delete their data</li>
+                    <li>· No sharing education records without consent</li>
+                    <li style="color:#38bdf8;font-weight:500;">→ Action: Privacy Policy + complete data deletion (not soft-delete)</li>
+                </ul>
+            </div>
+            <div class="reveal" style="padding:18px;border-radius:12px;border:1px solid rgba(129,140,248,0.25);background:rgba(129,140,248,0.05);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <span style="font-size:1.6rem;">🇪🇺</span>
+                    <div>
+                        <div style="font-weight:700;color:#818cf8;font-size:0.9rem;">GDPR</div>
+                        <div style="font-size:0.68rem;color:#5a7090;">General Data Protection Regulation</div>
+                    </div>
+                </div>
+                <ul style="list-style:none;padding:0;margin:0;font-size:0.76rem;color:#94a8c8;line-height:1.85;">
+                    <li>· Applies to any EU-based student regardless of server location</li>
+                    <li>· Explicit consent for data collection</li>
+                    <li>· Right to erasure ("right to be forgotten")</li>
+                    <li>· Data minimization + 72-hour breach notification</li>
+                    <li style="color:#818cf8;font-weight:500;">→ Action: Cookie banner · DPA template · AWS eu-west region for EU campuses</li>
+                </ul>
+            </div>
+        </div>
+        <div class="reveal" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+            <div style="padding:11px 13px;border-radius:9px;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.05);text-align:center;">
+                <div style="font-size:0.7rem;font-weight:700;color:#34d399;">SOC 2 Type II</div>
+                <div style="font-size:0.7rem;color:#5a7090;margin-top:3px;">Unlocks enterprise university contracts</div>
+            </div>
+            <div style="padding:11px 13px;border-radius:9px;border:1px solid rgba(251,191,36,0.2);background:rgba(251,191,36,0.05);text-align:center;">
+                <div style="font-size:0.7rem;font-weight:700;color:#fbbf24;">ISO 27001</div>
+                <div style="font-size:0.7rem;color:#5a7090;margin-top:3px;">International security certification</div>
+            </div>
+            <div style="padding:11px 13px;border-radius:9px;border:1px solid rgba(249,115,22,0.2);background:rgba(249,115,22,0.05);text-align:center;">
+                <div style="font-size:0.7rem;font-weight:700;color:#f97316;">HackerOne Bug Bounty</div>
+                <div style="font-size:0.7rem;color:#5a7090;margin-top:3px;">Crowdsourced testing at low cost</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 14: SECURITY ROADMAP -->
+<div class="slide" data-slide="14">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:380px;height:380px;top:-90px;right:-60px;background:#34d399;opacity:0.07;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-40px;background:#ef4444;opacity:0.05;"></div>
+    </div>
+    <div class="content">
+        <div class="reveal" style="font-size:0.68rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#34d399;margin-bottom:5px;">Cybersecurity · 5 of 5</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.4rem,2.6vw,2rem);font-weight:400;margin-bottom:16px;">Security Roadmap — MVP → Production</h2>
+        <div style="display:flex;flex-direction:column;gap:0;">
+            <div class="reveal" style="display:grid;grid-template-columns:110px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div style="display:flex;flex-direction:column;gap:3px;padding-top:2px;">
+                    <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#34d399;">MVP (Now)</span>
+                    <span style="font-size:0.62rem;color:#5a7090;">Launch</span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:#34d399;margin-top:4px;box-shadow:0 0 8px #34d399;"></span>
+                </div>
+                <div style="font-size:0.76rem;color:#94a8c8;line-height:1.75;">.edu email verification enforced · HTTPS everywhere (TLS 1.3) · Input sanitization on all form fields · JWT with expiry</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:110px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div style="display:flex;flex-direction:column;gap:3px;padding-top:2px;">
+                    <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#38bdf8;">Beta</span>
+                    <span style="font-size:0.62rem;color:#5a7090;">Month 1–2</span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:#38bdf8;margin-top:4px;box-shadow:0 0 8px #38bdf8;"></span>
+                </div>
+                <div style="font-size:0.76rem;color:#94a8c8;line-height:1.75;">Rate limiting on all API endpoints · OWASP dependency scan in CI/CD · Content reporting + moderation queue · Audit logging infrastructure</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:110px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div style="display:flex;flex-direction:column;gap:3px;padding-top:2px;">
+                    <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#818cf8;">Growth</span>
+                    <span style="font-size:0.62rem;color:#5a7090;">Month 3–6</span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:#818cf8;margin-top:4px;box-shadow:0 0 8px #818cf8;"></span>
+                </div>
+                <div style="font-size:0.76rem;color:#94a8c8;line-height:1.75;">AWS WAF deployment · 3rd-party penetration test · RBAC hardening · GitGuardian secret scanning · User privacy settings dashboard</div>
+            </div>
+            <div class="reveal" style="display:grid;grid-template-columns:110px 1fr;gap:14px;padding:11px 0;">
+                <div style="display:flex;flex-direction:column;gap:3px;padding-top:2px;">
+                    <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#fbbf24;">Scale</span>
+                    <span style="font-size:0.62rem;color:#5a7090;">Month 6–12</span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:#fbbf24;margin-top:4px;box-shadow:0 0 8px #fbbf24;"></span>
+                </div>
+                <div style="font-size:0.76rem;color:#94a8c8;line-height:1.75;">SOC 2 Type II audit · GDPR DPA templates for EU universities · Bug bounty on HackerOne · SIEM integration (Splunk/Datadog) · Red team exercise</div>
+            </div>
+        </div>
+        <div class="reveal" style="margin-top:10px;padding:10px 15px;border-radius:9px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);font-size:0.76rem;color:#94a8c8;line-height:1.7;">
+            🎯 <strong style="color:#e2e8f4;">Key Takeaway:</strong> Mitigation strategy prioritizes <span style="color:#38bdf8;">university SSO for identity</span> · <span style="color:#34d399;">strict API access control</span> · <span style="color:#fbbf24;">immutable audit logs</span>. Security is not an afterthought — it's a prerequisite for university procurement approval.
+        </div>
+    </div>
+</div>
+
+</div><!-- end .deck -->
+
+<div class="nav-controls">
+    <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+    <div class="slide-dots" id="dots"></div>
+    <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+    <span class="slide-counter" id="counter">1 / 14</span>
+</div>
+
+<script>
+    let current = 1;
+    const total = document.querySelectorAll(".slide").length;
+    const dotsContainer = document.getElementById("dots");
+    const counter = document.getElementById("counter");
+    for (let i = 1; i <= total; i++) {
+        const dot = document.createElement("div");
+        dot.className = "dot" + (i === 1 ? " active" : "");
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+    }
+    function goToSlide(n) {
+        const prev = document.querySelector(".slide.active");
+        const next = document.querySelector(".slide[data-slide=\"" + n + "\"]");
+        if (prev) prev.classList.remove("active");
+        if (next) { next.classList.add("active"); animateSlide(next); }
+        current = n; updateNav();
+    }
+    function changeSlide(dir) { let n = current + dir; if (n < 1) n = total; if (n > total) n = 1; goToSlide(n); }
+    function updateNav() {
+        document.querySelectorAll(".dot").forEach((d, i) => d.classList.toggle("active", i + 1 === current));
+        counter.textContent = current + " / " + total;
+    }
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); changeSlide(1); }
+        if (e.key === "ArrowLeft") { e.preventDefault(); changeSlide(-1); }
+    });
+    let touchStartX = 0;
+    document.addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; });
+    document.addEventListener("touchend", (e) => { const diff = touchStartX - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1); });
+
+    function animateSlide(slide) {
+        slide.querySelectorAll(".reveal").forEach((el, i) => {
+            el.style.transition = "none";
+            el.style.opacity = "0";
+            el.style.transform = "translateY(18px)";
+            el.offsetHeight;
+            const delay = i * 0.065;
+            el.style.transition = "opacity 0.4s cubic-bezier(0.16,1,0.3,1) " + delay + "s, transform 0.4s cubic-bezier(0.16,1,0.3,1) " + delay + "s";
+            el.style.opacity = "1";
+            el.style.transform = "translateY(0)";
+        });
+        animateSlideEffects(slide);
+    }
+
+    function animateSlideEffects(slide) {
+        slide.querySelectorAll(".bar-fill:not(.fill-init)").forEach((bar, i) => {
+            bar.classList.add("fill-init");
+            bar.style.width = "0%";
+            bar.style.transition = "width 0.7s cubic-bezier(0.16,1,0.3,1) " + (0.3 + i * 0.1) + "s";
+            bar.offsetHeight;
+            bar.style.width = bar.dataset.width + "%";
+        });
+    }
+
+    document.addEventListener("mousemove", (e) => {
+        const s = document.querySelector(".mouse-spotlight");
+        if (s) s.style.background = "radial-gradient(600px circle at " + e.clientX + "px " + e.clientY + "px, rgba(56,189,248,0.055), transparent 40%)";
+    });
+
+    window.initParticles = function(canvas, options) {
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+        const interactive = options.interactive !== false;
+        const count = options.count || (interactive ? 50 : 18);
+        let mx = -1000, my = -1000;
+        const particles = Array.from({ length: count }, () => ({
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+            size: Math.random() * 2 + 0.8, alpha: Math.random() * 0.28 + 0.08
+        }));
+        if (interactive) {
+            canvas.addEventListener("mousemove", (e) => { const r = canvas.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
+            canvas.addEventListener("mouseleave", () => { mx = -1000; my = -1000; });
+        }
+        (function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                if (interactive) { const dx = p.x - mx, dy = p.y - my, dist = Math.sqrt(dx*dx+dy*dy); if (dist < 120) { const f = (120-dist)/120*2; p.vx += (dx/dist)*f*0.1; p.vy += (dy/dist)*f*0.1; } }
+                p.vx *= 0.98; p.vy *= 0.98; p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                ctx.fillStyle = "rgba(56,189,248," + p.alpha + ")"; ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        })();
+    };
+    document.querySelectorAll(".particle-canvas").forEach(c => window.initParticles(c, { interactive: true, count: 50 }));
+    document.querySelectorAll(".particle-canvas-ambient").forEach(c => window.initParticles(c, { interactive: false, count: 18 }));
+    try { animateSlide(document.querySelector(".slide.active")); } catch(e) {}
+</script>
+</body>
+</html>
